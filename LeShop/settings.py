@@ -46,13 +46,19 @@ INSTALLED_APPS = [
     'trade',
     'user_operation',
     'xadmin',
-    'crispy_forms'
+    'crispy_forms',
+    'rest_framework',
+    'django_filters',
+    'corsheaders',  # 解决跨域问题
 ]
 
 # 重载系统的用户，让UserProfile生效
 AUTH_USER_MODEL = 'users.UserProfile'
 
+CORS_ORIGIN_ALLOW_ALL = True
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
