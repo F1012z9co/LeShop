@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'corsheaders',  # 解决跨域问题
+    'rest_framework.authtoken',
 ]
 
 # 重载系统的用户，让UserProfile生效
@@ -141,3 +142,16 @@ STATIC_URL = '/static/'
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+    )}
+
+# 手机号码正则表达式
+REGEX_MOBILE = "^1[3568]\d{9}$|^147\d{8}$|^176\d{8}$"
+
+# 云片网APIKEY
+APIKEY = "0aadf2dd4973b88a7702c2bc3fd5c685"
