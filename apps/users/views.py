@@ -3,8 +3,11 @@ from rest_framework import mixins
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import SmsSerializer, UserRegSerializer
+from rest_framework import permissions
+from rest_framework_jwt.settings import api_settings
+from .serializers import SmsSerializer, UserRegSerializer, UserDetialSerializer
 from utils.yunpian import YunPian
+from utils.permissions import IsOwnerOrReadOnly
 from LeShop import settings
 from .models import VerifyCode, UserProfile
 
@@ -32,6 +35,47 @@ class SmsCodeViewset(mixins.CreateModelMixin, viewsets.GenericViewSet):
             return Response(sms_status["msg"], status=status.HTTP_201_CREATED)
 
 
-class UserViewset(mixins.CreateModelMixin, viewsets.GenericViewSet):
-    serializer_class = UserRegSerializer
+class UserViewset(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
+    # serializer_class = UserRegSerializer
     queryset = UserProfile.objects.all()
+
+    def get_object(self):
+        return self.request.user
+
+    def get_permissions(self):
+        if self.action == "create":
+            return []
+        elif self.action == "retrieve":
+            return [permissions.IsAuthenticated(), ]
+        else:
+            return [permissions.IsAuthenticated(), ]
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return UserRegSerializer
+        elif self.action == "retrieve":
+            return UserDetialSerializer
+        else:
+            return UserDetialSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = self.perform_create(serializer)
+        ret_dict = serializer.data
+
+        jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+        jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+
+        payload = jwt_payload_handler(user)
+        token = jwt_encode_handler(payload)
+
+        ret_dict["token"] = token
+        ret_dict["name"] = user.name if user.name else user.username
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(ret_dict, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        return serializer.save()
